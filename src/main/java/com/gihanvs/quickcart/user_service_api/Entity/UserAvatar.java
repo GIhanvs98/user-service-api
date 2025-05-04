@@ -20,6 +20,9 @@ public class UserAvatar {
     @Embedded
     private FileResource fileResource;
 
+    @OneToOne()
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
 }

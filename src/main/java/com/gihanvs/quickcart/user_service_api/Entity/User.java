@@ -1,9 +1,6 @@
 package com.gihanvs.quickcart.user_service_api.Entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -28,5 +25,14 @@ public class User {
     private boolean activeStatus;
     @Column(nullable = false,name = "OTP")
     private int otp;
+
+    @OneToOne(mappedBy = "user")
+    private ShippingAddress shippingAddress;
+
+    @OneToOne(mappedBy = "user")
+    private BillingAddress billingAddress;
+
+    @OneToOne(mappedBy = "user")
+    private UserAvatar userAvatar;
 
 }
