@@ -12,12 +12,15 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import com.devstack.system.service.impl.JwtService;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final KeycloackSecurityUtil keycloackSecurityUtil;
     private final UserRepo userRepo;
     private final OtpRepo otpRepo;
+    private JwtService jwtService;
+
 
     @Override
     public void createUser(RequestUserDto dto) throws IOException {
