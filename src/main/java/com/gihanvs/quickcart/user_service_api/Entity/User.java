@@ -23,8 +23,7 @@ public class User {
     private String lastName;
     @Column(nullable = false,name = "active_status",columnDefinition = "TINYINT")
     private boolean activeStatus;
-    @Column(nullable = false,name = "OTP")
-    private int otp;
+
 
     @OneToOne(mappedBy = "user")
     private ShippingAddress shippingAddress;
@@ -35,4 +34,6 @@ public class User {
     @OneToOne(mappedBy = "user")
     private UserAvatar userAvatar;
 
+    @OneToOne(mappedBy = "systemUser",fetch = FetchType.EAGER,cascade = CascadeType.REMOVE)
+    private Otp otp;
 }
