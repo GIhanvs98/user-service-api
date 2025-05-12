@@ -346,6 +346,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean verifyReset(String email, String otp) {
+        try {
+            Optional<User> selectedUserObj =userRepo.findByUserName(email);
+            if (selectedUserObj.isEmpty()) {
+                throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+            }
+            User systemUser = selectedUserObj.get();
+            Otp selectedOtpObj = systemUser.getOtp();
+
+            if (selectedOtpObj.getCode().equals(otp)) {
+
+                return true;
+            }
+        } catch (Exception e) {
+            if (e instanceof EntryNotFoundException) {
+                throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+            } else {
+                throw new InternalServerException("Something went wrong please try again later..");
+            }
+
+        }
         return false;
     }
 
