@@ -1,10 +1,7 @@
 package com.gihanvs.quickcart.user_service_api.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @AllArgsConstructor
@@ -12,6 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "user_avatar")
+@Builder
 public class UserAvatar {
     @Id
     @Column(nullable = false,unique = true,name = "avatar_id")
