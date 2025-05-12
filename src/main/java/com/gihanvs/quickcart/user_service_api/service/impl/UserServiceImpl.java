@@ -4,6 +4,7 @@ import com.gihanvs.quickcart.user_service_api.config.KeycloackSecurityUtil;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserDto;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserLoginRequest;
 import com.gihanvs.quickcart.user_service_api.dto.response.ResponseUserDto;
+import com.gihanvs.quickcart.user_service_api.repo.UserRepo;
 import com.gihanvs.quickcart.user_service_api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final KeycloackSecurityUtil keycloackSecurityUtil;
+    private final UserRepo userRepo;
+
     @Override
     public void createUser(RequestUserDto dto) throws IOException {
 
