@@ -15,11 +15,15 @@ import com.gihanvs.quickcart.user_service_api.util.FileDataExtractor;
 import com.gihanvs.quickcart.user_service_api.util.OtpGenerator;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -27,7 +31,9 @@ import java.util.*;
 import java.util.UUID;
 
 import com.devstack.system.service.impl.JwtService;
-
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 
 @Service
@@ -115,7 +121,55 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Object userLogin(RequestUserLoginRequest request) {
-        return null;
+        try {
+            Optional<User> selectedUserObj = userRepo.findByUserName(request.getUsername());
+           User systemUser = selectedUserObj.get();
+            if (!systemUser.getIsEmailVerified()) {
+
+                Otp selectedOtpObj = systemUser.getOtp();
+                if (selectedOtpObj.getAttempts() >= 5) {
+
+                    String code = otpGenerator.generateOtp(4);
+
+                    emailService.sendUserSignupVerificationCode(systemUser.getUserName(),
+                            "Verify Your Email Address for Quick-cart", code);
+
+                    selectedOtpObj.setAttempts(0);
+                    selectedOtpObj.setCode(code);
+                    selectedOtpObj.setCreatedDate(new Date());
+                    otpRepo.save(selectedOtpObj);
+
+                    throw new TooManyRequestException("Too many unsuccessful attempts. New OTP sent and please verify.");
+                }
+                emailService.sendUserSignupVerificationCode(systemUser.getUserName(),
+                        "Verify Your Email Address for  Quick-cart Access", selectedOtpObj.getCode());
+                throw new RedirectionException("Your email has not been verified. Please verify your email");
+
+            } else {
+                MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+                requestBody.add("client_id", clientId);
+                requestBody.add("grant_type", OAuth2Constants.PASSWORD);
+                requestBody.add("username", request.getUsername());
+                requestBody.add("client_secret", secret);
+                requestBody.add("password", request.getPassword());
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<Object> response = restTemplate.postForEntity(keyCloakApiUrl, requestBody, Object.class);
+                return response.getBody();
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
+            if (e instanceof RedirectionException) {
+                throw new RedirectionException("Your email has not been verified. Please verify your email"+e.toString());
+            } else if (e instanceof TooManyRequestException) {
+                throw new TooManyRequestException("Too many unsuccessful attempts. New OTP sent and please verify."+e.toString());
+            } else {
+                throw new UnauthorizedException("Invalid username or password. Please double-check your credentials and try again."+e.toString());
+            }
+
+        }
     }
 
     @Override
