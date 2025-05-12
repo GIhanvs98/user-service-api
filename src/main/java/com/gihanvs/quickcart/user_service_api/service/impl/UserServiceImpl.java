@@ -245,7 +245,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<ResponseUserDto> findUsersPaginate(String searchText, int page, int size) {
-        return List.of();
+        try {
+            Keycloak keycloak = keycloackSecurityUtil.getKeycloakInstance();
+
+            // Calculate the first result index based on the page and size
+            int firstResult = page * size;
+
+            // Search for users by email using Keycloak's user search
+            List<UserRepresentation> users = keycloak.realm(realm).users()
+                    .search(searchText, firstResult, size);
+
+            // Map the retrieved UserRepresentation objects to ResponseUserDto objects
+            List<ResponseUserDto> responseUserDtos = new ArrayList<>();
+            for (UserRepresentation user : users) {
+                ResponseUserDto responseUserDto = mapToResponseUserDto(user);
+                responseUserDtos.add(responseUserDto);
+            }
+            return responseUserDtos;
+        } catch (Exception e) {
+            // Handle any exceptions
+            throw new RuntimeException("Error occurred while searching users", e);
+        }
     }
 
     @Override
@@ -287,6 +307,19 @@ public class UserServiceImpl implements UserService {
         creds.add(cred);
         userRep.setCredentials(creds);
         return userRep;
+
+    }
+
+    private ResponseUserDto mapToResponseUserDto(UserRepresentation user){
+        return ResponseUserDto.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .username(user.getEmail())
+                .username(user.getUsername())
+                .avatar(null)
+                .billingAddress(null)
+                .shippingAddress(null)
+                .build();
 
     }
 }
