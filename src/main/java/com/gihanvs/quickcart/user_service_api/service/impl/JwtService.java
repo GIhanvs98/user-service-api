@@ -4,7 +4,9 @@ package com.devstack.system.service.impl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
@@ -15,7 +17,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 import java.util.*;
-
+@RequiredArgsConstructor
 @Service
 public class JwtService {
 
