@@ -270,11 +270,77 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resend(String email) {
+        try {
+            Optional<User> selectedUserObj =userRepo.findByUserName(email);
+            if (selectedUserObj.isEmpty()) {
+                throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+            }
+         User systemUser = selectedUserObj.get();
+            if (systemUser.getIsEmailVerified()) {
+                throw new DuplicateEntryException("The email is already activated");
+            }
+            Otp selectedOtpObj = systemUser.getOtp();
+            if (selectedOtpObj.getAttempts() >= 5) {
+                String code = otpGenerator.generateOtp(4);
+
+
+                emailService.sendUserSignupVerificationCode(email,
+                        "Verify Your Email Address for Quick-cart Access", code);
+
+
+                selectedOtpObj.setAttempts(0);
+                selectedOtpObj.setCode(code);
+                selectedOtpObj.setCreatedDate(new Date());
+                otpRepo.save(selectedOtpObj);
+
+                throw new TooManyRequestException("Too many unsuccessful attempts. New OTP sent and please verify.");
+            }
+            emailService.sendUserSignupVerificationCode(systemUser.getUserName(),
+                    "Verify Your Email Address for Quick-cart Access", selectedOtpObj.getCode());
+
+        } catch (Exception e) {
+
+            if (e instanceof DuplicateEntryException) {
+                throw new DuplicateEntryException("The email is already activated");
+            } else if (e instanceof TooManyRequestException) {
+                throw new TooManyRequestException("Too many unsuccessful attempts. New OTP sent and please verify.");
+            } else if (e instanceof EntryNotFoundException) {
+                throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+            } else {
+                throw new UnauthorizedException("Invalid username or password. Please double-check your credentials and try again.");
+            }
+
+        }
 
     }
 
     @Override
     public void forgotPasswordSendVerificationCode(String email) {
+        Optional<User> selectedUserObj = userRepo.findByUserName(email);
+        if (selectedUserObj.isEmpty()) {
+            throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+        }
+       User systemUser = selectedUserObj.get();
+        Keycloak keycloak = null;
+        keycloak = keycloackSecurityUtil.getKeycloakInstance();
+        UserRepresentation existingUser = keycloak.realm(realm).users().search(email).stream()
+                .findFirst().orElse(null);
+        if (existingUser == null) {
+            throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+        }
+
+        Otp selectedOtpObj = systemUser.getOtp();
+        String code = otpGenerator.generateOtp(4);
+        selectedOtpObj.setCode(code);
+        selectedOtpObj.setCreatedDate(new Date());
+        otpRepo.save(selectedOtpObj);
+        try {
+            emailService.sendPasswordResetVerificationCode(systemUser.getUserName(),
+                    "Verify Your Email Address for Quick-cart Access", selectedOtpObj.getCode());
+        } catch (IOException e) {
+            throw new UnauthorizedException("Invalid username or password. Please double-check your credentials and try again.");
+
+        }
 
     }
 
