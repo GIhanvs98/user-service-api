@@ -5,6 +5,7 @@ import com.gihanvs.quickcart.user_service_api.Entity.User;
 import com.gihanvs.quickcart.user_service_api.config.KeycloackSecurityUtil;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserDto;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserLoginRequest;
+import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserPasswordResetDto;
 import com.gihanvs.quickcart.user_service_api.dto.response.ResponseUserDto;
 import com.gihanvs.quickcart.user_service_api.exception.*;
 import com.gihanvs.quickcart.user_service_api.repo.OtpRepo;
@@ -17,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -369,9 +371,35 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
+
+
+
+
     @Override
-    public boolean passwordReset(RequestUserDto dto) {
-        return false;
+    public boolean passwordReset(RequestUserPasswordResetDto dto) {
+        Optional<User> selectedUserObj = userRepo.findByUserName(dto.getEmail());
+        if (selectedUserObj.isPresent()) {
+            User systemUser = selectedUserObj.get();
+            Otp selectedOtpObj = systemUser.getOtp();
+            Keycloak keycloak = keycloackSecurityUtil.getKeycloakInstance();
+            List<UserRepresentation> keycloakUsers = keycloak.realm(realm).users().search(systemUser.getUserName());
+            if (!keycloakUsers.isEmpty() && selectedOtpObj.getCode().equals(dto.getCode())) {
+                UserRepresentation keycloakUser = keycloakUsers.get(0);
+                UserResource userResource = keycloak.realm(realm).users().get(keycloakUser.getId());
+                CredentialRepresentation newPassword = new CredentialRepresentation();
+                newPassword.setType(CredentialRepresentation.PASSWORD);
+                newPassword.setValue(dto.getPassword());
+                newPassword.setTemporary(false);
+                userResource.resetPassword(newPassword);
+
+                return true;
+            }
+
+            throw new BadRequestException("Something went wrong with the OTP, Please try again");
+
+        }
+        throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+
     }
 
     @Override

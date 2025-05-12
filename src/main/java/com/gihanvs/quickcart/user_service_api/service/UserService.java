@@ -2,6 +2,7 @@ package com.gihanvs.quickcart.user_service_api.service;
 
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserDto;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserLoginRequest;
+import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserPasswordResetDto;
 import com.gihanvs.quickcart.user_service_api.dto.response.ResponseUserDto;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ public interface UserService {
     public void resend(String email);
     public void forgotPasswordSendVerificationCode(String email);
     public boolean verifyReset(String email, String otp);
-    public boolean passwordReset(RequestUserDto dto);
+    public boolean passwordReset(RequestUserPasswordResetDto dto);
     String getUserId(String email);
 
 
