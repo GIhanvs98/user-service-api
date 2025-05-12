@@ -7,6 +7,7 @@ import com.gihanvs.quickcart.user_service_api.dto.response.ResponseUserDto;
 import com.gihanvs.quickcart.user_service_api.repo.OtpRepo;
 import com.gihanvs.quickcart.user_service_api.repo.UserRepo;
 import com.gihanvs.quickcart.user_service_api.service.UserService;
+import com.gihanvs.quickcart.user_service_api.util.OtpGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final OtpRepo otpRepo;
     private JwtService jwtService;
+    private OtpGenerator otpGenerator;
 
 
     @Override
