@@ -6,7 +6,7 @@ import com.gihanvs.quickcart.user_service_api.config.KeycloackSecurityUtil;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserDto;
 import com.gihanvs.quickcart.user_service_api.dto.request.RequestUserLoginRequest;
 import com.gihanvs.quickcart.user_service_api.dto.response.ResponseUserDto;
-import com.gihanvs.quickcart.user_service_api.exception.DuplicateEntryException;
+import com.gihanvs.quickcart.user_service_api.exception.*;
 import com.gihanvs.quickcart.user_service_api.repo.OtpRepo;
 import com.gihanvs.quickcart.user_service_api.repo.UserRepo;
 import com.gihanvs.quickcart.user_service_api.service.EmailService;
@@ -120,6 +120,72 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean verifyEmail(String otp, String email) {
+        try {
+            Optional<User> selectedUserObj = userRepo.findByUserName(email);
+            if (selectedUserObj.isEmpty()) {
+                throw new EntryNotFoundException("Unable to find any users associated with the provided email address.");
+            }
+         User systemUser = selectedUserObj.get();
+
+            Otp selectedOtpObj = systemUser.getOtp();
+
+            if (selectedOtpObj.getIsVerified()) {
+                throw new BadRequestException("This OTP has already been used. Please request another one for verification.");
+            }
+
+            if (selectedOtpObj.getAttempts() >= 5) {//couting otp entering attempts
+                String code = otpGenerator.generateOtp(4);
+
+                emailService.sendUserSignupVerificationCode(email,
+                        "Verify Your Email Address Quick-Cart Access", code);
+
+                selectedOtpObj.setAttempts(0);
+                selectedOtpObj.setCode(code);
+                selectedOtpObj.setCreatedDate(new Date());
+                otpRepo.save(selectedOtpObj);
+
+                throw new TooManyRequestException("Too many unsuccessful attempts. New OTP sent and please verify.");
+            }
+
+            if (selectedOtpObj.getCode().equals(otp)) {
+
+                UserRepresentation keycloakUser = keycloackSecurityUtil.getKeycloakInstance().realm(realm)
+                        .users()
+                        .search(email)
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() -> new EntryNotFoundException("User not found! Contact support for assistance"));
+
+                keycloakUser.setEmailVerified(true);
+                keycloakUser.setEnabled(true);
+
+                keycloackSecurityUtil.getKeycloakInstance().realm(realm)
+                        .users()
+                        .get(keycloakUser.getId())
+                        .update(keycloakUser);
+
+                systemUser.setActiveStatus(true);
+                systemUser.setIsEnabled(true);
+                systemUser.setIsEmailVerified(true);
+
+                userRepo.save(systemUser);
+
+                selectedOtpObj.setIsVerified(true);
+                selectedOtpObj.setAttempts(selectedOtpObj.getAttempts() + 1);
+
+                otpRepo.save(selectedOtpObj);
+
+                return true;
+
+            } else {
+                selectedOtpObj.setAttempts(selectedOtpObj.getAttempts() + 1);
+                otpRepo.save(selectedOtpObj);
+            }
+
+
+        } catch (IOException exception) {
+            throw new InternalServerException("Something went wrong please try again later..");
+        }
         return false;
     }
 
