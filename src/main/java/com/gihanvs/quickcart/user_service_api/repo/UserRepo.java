@@ -5,6 +5,8 @@ import com.gihanvs.quickcart.user_service_api.Entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepo extends JpaRepository<User, String> {
+import java.util.Optional;
 
+public interface UserRepo extends JpaRepository<User, String> {
+    public Optional<User> findByUserName(String email);
 }

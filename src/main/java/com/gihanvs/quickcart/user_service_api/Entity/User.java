@@ -3,6 +3,8 @@ package com.gihanvs.quickcart.user_service_api.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Date;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,6 +25,23 @@ public class User {
     private String lastName;
     @Column(nullable = false,name = "active_status",columnDefinition = "TINYINT")
     private boolean activeStatus;
+
+    @Column(name = "is_account_non_expired", columnDefinition = "TINYINT", nullable = false)
+    private Boolean isAccountNonExpired;
+
+    @Column(name = "is_email_verified", columnDefinition = "TINYINT", nullable = false)
+    private Boolean isEmailVerified;
+
+    @Column(name = "is_account_non_locked", columnDefinition = "TINYINT", nullable = false)
+    private Boolean isAccountNonLocked;
+
+    @Column(name = "is_enabled", columnDefinition = "TINYINT", nullable = false)
+    private Boolean isEnabled;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_date", nullable = false, columnDefinition = "DATETIME")
+    private Date createdDate;
+
 
 
     @OneToOne(mappedBy = "user")
