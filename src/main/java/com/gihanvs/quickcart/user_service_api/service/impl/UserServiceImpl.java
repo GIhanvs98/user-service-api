@@ -108,7 +108,8 @@ public class UserServiceImpl implements UserService {
                     .build();
             User savedUser = UserRepo.save(createdSystemUser);
             Otp otp = Otp.builder()
-                    .propertyId(UUID.randomUUID().toString())                    .code(otpGenerator.generateOtp(4))
+                    .propertyId(UUID.randomUUID().toString())
+                    .code(otpGenerator.generateOtp(4))
                     .createdDate(new Date())
                     .isVerified(false)
                     .attempts(0)
