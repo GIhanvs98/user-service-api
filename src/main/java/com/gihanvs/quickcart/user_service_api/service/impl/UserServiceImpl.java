@@ -41,6 +41,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
     private final KeycloackSecurityUtil keycloackSecurityUtil;
     private final EmailService emailService;
     private final UserRepo userRepo;
@@ -106,7 +107,7 @@ public class UserServiceImpl implements UserService {
                     .isEnabled(false)
                     .createdDate(new Date())
                     .build();
-            User savedUser = UserRepo.save(createdSystemUser);
+            User savedUser = userRepo.save(createdSystemUser);
             Otp otp = Otp.builder()
                     .propertyId(UUID.randomUUID().toString())
                     .code(otpGenerator.generateOtp(4))
